@@ -1,7 +1,11 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "my-project"
+name = "Denoised-Neural-Portfolio-Optimizer"
 version = "0.1.0"
-description = "Описание вашего проекта"
+description = "Deep Markowitz Neural Portfolio Optimizer"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -12,6 +16,7 @@ dependencies = [
     "numpy>=2.2.6",
     "pandas>=2.3.3",
     "pyarrow>=25.0.1",
+    "pytest>=9.2.0",
     "pyyaml>=6.0.3",
     "riskfolio-lib>=7.0.1",
     "scikit-learn>=1.7.2",
@@ -23,3 +28,6 @@ dependencies = [
     "tqdm>=4.70.1",
     "yfinance>=1.7.0",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
