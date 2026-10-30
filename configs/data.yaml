@@ -1,0 +1,91 @@
+# Universe Configuration
+# Note on Survivorship Bias: Tickers are selected from large-cap S&P 500 constituents
+# that have traded continuously over the entire sample period (2015–2025). This introduces
+# survivorship bias, which is acknowledged as a limitation of using free historical data.
+
+lookback_days: 252 # T for rolling covariance (N=50, T=252 -> N/T ≈ 0.198)
+
+date_range:
+  start: "2015-01-01"
+  end: "2025-12-31"
+  timezone: "UTC"
+
+train_test_split:
+  train_end: "2022-12-31"
+  test_start: "2023-01-01"
+
+number_of_assets: 50
+
+# 50 diversified, liquid large-caps across all 11 GICS sectors (continuous history 2015-2025)
+ticker_list:
+  # Information Technology (8)
+  - AAPL
+  - MSFT
+  - NVDA
+  - ADBE
+  - CSCO
+  - CRM
+  - INTC
+  - QCOM
+
+  # Financials (7)
+  - JPM
+  - BAC
+  - WFC
+  - GS
+  - MS
+  - BLK
+  - BRK-B
+
+  # Healthcare (7)
+  - JNJ
+  - UNH
+  - PFE
+  - MRK
+  - ABT
+  - TMO
+  - LLY
+
+  # Consumer Discretionary (5)
+  - AMZN
+  - HD
+  - MCD
+  - NKE
+  - SBUX
+
+  # Consumer Staples (5)
+  - PG
+  - KO
+  - PEP
+  - WMT
+  - COST
+
+  # Communication Services (4)
+  - GOOGL
+  - META
+  - DIS
+  - CMCSA
+
+  # Energy (4)
+  - XOM
+  - CVX
+  - COP
+  - SLB
+
+  # Industrials (5)
+  - CAT
+  - HON
+  - UNP
+  - GE
+  - BA
+
+  # Utilities (2)
+  - NEE
+  - SO
+
+  # Materials (2)
+  - LIN
+  - APD
+
+  # Real Estate (1)
+  - AMT

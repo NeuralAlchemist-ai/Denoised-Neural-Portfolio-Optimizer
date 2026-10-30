@@ -221,3 +221,4 @@ __marimo__/
 
 data/processed/
 data/raw/
+.DS_Store
