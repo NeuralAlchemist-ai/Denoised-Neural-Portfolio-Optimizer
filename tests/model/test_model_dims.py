@@ -1,7 +1,7 @@
 import torch
 import pytest
 
-from src.portfolio.models.networks import DeepMarkowitz_MLP, DeepMarkowitz_MHA
+from portfolio.models.networks import DeepMarkowitz_MLP, DeepMarkowitz_MHA
 
 def test_model_dims():
     B,N,F = 8, 50, 10
