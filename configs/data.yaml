@@ -5,6 +5,24 @@
 
 lookback_days: 252 # T for rolling covariance (N=50, T=252 -> N/T ≈ 0.198)
 
+# Feature pipeline configuration. Feature order defines the final tensor axis and
+# must remain stable for any trained model that consumes saved feature tensors.
+feature_pipeline:
+  feature_names:
+    - mom_5d
+    - mom_21d
+    - mom_63d
+    - mom_126d
+    - mom_252d
+    - vol_21d
+    - vol_63d
+    - downside_vol_21d
+    - sharpe_63d
+    - price_to_sma252
+  clip_value: 3.0
+  warmup_days: 252
+  trading_days_per_year: 252
+
 date_range:
   start: "2015-01-01"
   end: "2025-12-31"
