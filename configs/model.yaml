@@ -1,0 +1,24 @@
+# Portfolio optimization configuration for DenoisedPortfolioWrapper
+# weights_option: portfolio construction mode
+#   - "long-only"    — softmax weights, all positive, sum to 1
+#   - "long-short"   — long/short positions, gross exposure = L
+#   - "neutral-only" — market-neutral, zero net exposure
+weights_option: "long-only"
+
+# Risk-aversion coefficient: higher gamma → lower risk, lower returns
+gamma: 1.0
+
+# Ridge regularisation added to the covariance matrix for numerical stability
+ridge: 1.0e-2
+
+# Temperature for the softmax in weight construction; lower t → more concentrated
+t: 1.0
+
+# Maximum weight cap per asset (as a fraction of L)
+w_max: 0.15
+
+# Gross leverage / total exposure target (sum of |weights| = L)
+L: 1.0
+
+# Numerical epsilon to avoid division by zero
+eps: 1.0e-8
