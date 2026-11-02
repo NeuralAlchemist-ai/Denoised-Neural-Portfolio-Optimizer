@@ -1,0 +1,109 @@
+# Universe Configuration
+# Note on Survivorship Bias: Tickers are selected from large-cap S&P 500 constituents
+# that have traded continuously over the entire sample period (2015–2025). This introduces
+# survivorship bias, which is acknowledged as a limitation of using free historical data.
+
+lookback_days: 252 # T for rolling covariance (N=50, T=252 -> N/T ≈ 0.198)
+
+# Feature pipeline configuration. Feature order defines the final tensor axis and
+# must remain stable for any trained model that consumes saved feature tensors.
+feature_pipeline:
+  feature_names:
+    - mom_5d
+    - mom_21d
+    - mom_63d
+    - mom_126d
+    - mom_252d
+    - vol_21d
+    - vol_63d
+    - downside_vol_21d
+    - sharpe_63d
+    - price_to_sma252
+  clip_value: 3.0
+  warmup_days: 252
+  trading_days_per_year: 252
+
+date_range:
+  start: "2015-01-01"
+  end: "2025-12-31"
+  timezone: "UTC"
+
+train_test_split:
+  train_end: "2022-12-31"
+  test_start: "2023-01-01"
+
+number_of_assets: 50
+
+# 50 diversified, liquid large-caps across all 11 GICS sectors (continuous history 2015-2025)
+ticker_list:
+  # Information Technology (8)
+  - AAPL
+  - MSFT
+  - NVDA
+  - ADBE
+  - CSCO
+  - CRM
+  - INTC
+  - QCOM
+
+  # Financials (7)
+  - JPM
+  - BAC
+  - WFC
+  - GS
+  - MS
+  - BLK
+  - BRK-B
+
+  # Healthcare (7)
+  - JNJ
+  - UNH
+  - PFE
+  - MRK
+  - ABT
+  - TMO
+  - LLY
+
+  # Consumer Discretionary (5)
+  - AMZN
+  - HD
+  - MCD
+  - NKE
+  - SBUX
+
+  # Consumer Staples (5)
+  - PG
+  - KO
+  - PEP
+  - WMT
+  - COST
+
+  # Communication Services (4)
+  - GOOGL
+  - META
+  - DIS
+  - CMCSA
+
+  # Energy (4)
+  - XOM
+  - CVX
+  - COP
+  - SLB
+
+  # Industrials (5)
+  - CAT
+  - HON
+  - UNP
+  - GE
+  - BA
+
+  # Utilities (2)
+  - NEE
+  - SO
+
+  # Materials (2)
+  - LIN
+  - APD
+
+  # Real Estate (1)
+  - AMT
