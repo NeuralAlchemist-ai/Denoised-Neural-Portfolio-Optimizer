@@ -46,15 +46,23 @@ class ICCLoss(nn.Module):
         return -torch.mean(spearman_correlation)
 
 class CombinedLoss(nn.Module):
-    def __init__(self, alpha=0.5, eps=1e-8, temperature=0.1):
+    def __init__(self, alpha, eps=1e-8, temperature=0.1):
         super().__init__()
-        self.alpha = alpha
+        self.initial_alpha = alpha
         self.eps = eps
         self.temperature = temperature
 
         self.sharpe_loss = SharpeLoss(eps)
         self.icc_loss = ICCLoss(eps, temperature)
 
+        initial_logit = torch.log(torch.tensor(self.initial_alpha) / (1.0 - self.initial_alpha))
+        
+        self.alpha_logit = nn.Parameter(initial_logit)
+    @property
+    def alpha(self):
+        return torch.sigmoid(self.alpha_logit)
+
     def forward(self, weights, next_r, predicted_mu, real_mu):
-        return self.alpha * self.sharpe_loss(weights, next_r) + (1 - self.alpha) * self.icc_loss(predicted_mu, real_mu)
+        current_alpha = self.alpha
+        return current_alpha * self.sharpe_loss(weights, next_r) + (1 - current_alpha) * self.icc_loss(predicted_mu, real_mu)
     
