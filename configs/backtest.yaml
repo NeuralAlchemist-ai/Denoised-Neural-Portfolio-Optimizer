@@ -1,0 +1,5 @@
+lookback_days: 252
+rebalance_freq: 21
+transaction_cost_bps: 10.0
+initial_capital: 1.0
+risk_free_rate: 0.02
