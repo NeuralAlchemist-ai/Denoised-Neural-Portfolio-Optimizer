@@ -11,7 +11,8 @@ from portfolio.data.preprocess import compute_simple_returns
 from portfolio.strategies.base import BaseStrategy
 from portfolio.strategies import (EqualWeightStrategy,
                                   MinimumVarianceStrategy,
-                                  MaxSharpeStrategy)
+                                  MaxSharpeStrategy,
+                                  HRPStrategy)
 
 logger = logging.getLogger(__name__)
 
@@ -214,7 +215,7 @@ if __name__ == "__main__":
     backtest_config = BacktestConfig.from_yaml(backtest_config_path)
     engine = BacktestEngine(backtest_config)
 
-    strategy = MaxSharpeStrategy()
+    strategy = HRPStrategy(estimator="ledoit_wolf", denoise=True, linkage_method="ward")
     result = engine.run(strategy, returns)
 
     total_return = (result.portfolio_values.iloc[-1] / result.portfolio_values.iloc[0] - 1) * 100

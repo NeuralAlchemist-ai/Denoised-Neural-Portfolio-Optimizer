@@ -6,10 +6,12 @@ from portfolio.strategies.classical import (
     MaxSharpeStrategy,
     MinimumVarianceStrategy,
 )
+from portfolio.strategies.hrp import HRPStrategy
 
 __all__ = [
     "BaseStrategy",
     "EqualWeightStrategy",
     "MinimumVarianceStrategy",
     "MaxSharpeStrategy",
+    "HRPStrategy"
 ]
