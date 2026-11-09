@@ -12,29 +12,36 @@ class DenoisedPortfolioWrapper(nn.Module):
     Args:
         config:       Model config dict (loaded from model.yaml).
         architecture: An instantiated backbone (DeepMarkowitz_MLP/MHA/MLA).
+        covarience:   Optional default covariance matrix.
     """
 
-    def __init__(self, config: dict, architecture: nn.Module, covarience):
+    def __init__(self, config: dict, architecture: nn.Module, covarience=None):
         super().__init__()
         self.config = config
         self.architecture = architecture
         self.markowitz = markowitz_layer
         self.covarience = covarience
 
-    def forward(self, X):
+    def forward(self, X, cov=None):
         """
         Args:
             X:   Feature tensor  (B, N, F).
-            cov: Covariance matrix (B, N, N).
+            cov: Covariance matrix (B, N, N). If None, falls back to self.covarience.
 
         Returns:
             mu:      Raw expected-return scores  (B, N).
             weights: Portfolio weights           (B, N).
         """
         mu = self.architecture(X)                    # (B, N)
+        cov_matrix = cov if cov is not None else self.covarience
+        if cov_matrix is None:
+            raise ValueError(
+                "Covariance matrix must be provided either in forward(X, cov) or in __init__."
+            )
+
         weights = self.markowitz(
             mu,
-            self.covarience,
+            cov_matrix,
             weights_option=self.config["weights_option"],
             gamma=self.config["gamma"],
             ridge=self.config["ridge"],
