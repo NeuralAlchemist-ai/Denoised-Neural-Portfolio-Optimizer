@@ -25,6 +25,8 @@ eps: 1.0e-8
 
 features_path: "data/processed/features_tensor.pt"
 prices_path: "data/raw/prices.parquet"
+save_dir: "models_weights"
+log_dir: "logs"
 test_size: 0.2
 validation_size: 0.2
 

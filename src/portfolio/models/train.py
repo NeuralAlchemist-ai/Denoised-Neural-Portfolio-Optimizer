@@ -434,13 +434,51 @@ def evaluate_model(
     return test_combined, test_sharpe, test_ic
 
 
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+def setup_logging(
+    log_dir: str = "logs",
+    log_filename: Optional[str] = None,
+    level: int = logging.INFO,
+) -> Path:
+    """Configure logging to stream to both standard output and a persistent log file on disk."""
+    log_path = Path(log_dir)
+    log_path.mkdir(parents=True, exist_ok=True)
+
+    if log_filename is None:
+        timestamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
+        log_filename = f"train_{timestamp}.log"
+
+    log_file = log_path / log_filename
+    formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+
+    # Avoid duplicate handlers if called multiple times
+    root_logger.handlers.clear()
+
+    # Console stream handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(level)
+    root_logger.addHandler(console_handler)
+
+    # Persistent file handler
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(level)
+    root_logger.addHandler(file_handler)
+
+    logger.info("Logging configured. Writing to console and log file: '%s'", log_file)
+    return log_file
+
+
+if __name__ == "__main__":
     config = _load_config("configs/model.yaml")
+    log_dir = config.get("log_dir", "logs")
+    log_file = setup_logging(log_dir=log_dir)
     features_path = config["features_path"]
     prices_path = config["prices_path"]
     epochs = config.get("epochs", 100)
@@ -480,8 +518,8 @@ if __name__ == "__main__":
         batch_size,
     )
 
-    save_dir = Path("models")
-    save_dir.mkdir(exist_ok=True)
+    save_dir = Path(config.get("save_dir", "models_weights"))
+    save_dir.mkdir(parents=True, exist_ok=True)
 
     cv_results = {}
 
