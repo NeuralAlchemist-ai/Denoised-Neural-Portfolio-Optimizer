@@ -220,5 +220,5 @@ __marimo__/
 .streamlit/secrets.toml
 
 data/
-
+models_weights/
 .DS_Store
