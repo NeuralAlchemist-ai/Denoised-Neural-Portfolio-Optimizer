@@ -25,8 +25,8 @@ class ICCLoss(nn.Module):
 
     def forward(self, predicted_mu, real_mu):
         with torch.no_grad():
-            real_ranks = torch.argsort(torch.argsort(real_mu, dim=-1), dim=-1).float() + 1.0
-
+            real_ranks = torch.argsort(torch.argsort(real_mu, dim=-1), dim=-1, descending=True).float() + 1.0
+        predicted_mu = (predicted_mu - predicted_mu.mean(dim=-1, keepdim=True)) / (predicted_mu.std(dim=-1, keepdim=True) + self.eps)
         scores_i = predicted_mu.unsqueeze(2) # (Batch_Size, N, 1)
         scores_j = predicted_mu.unsqueeze(1) # (Batch_Size, 1, N)
         delta_ij = scores_j - scores_i
@@ -48,21 +48,16 @@ class ICCLoss(nn.Module):
 class CombinedLoss(nn.Module):
     def __init__(self, alpha, eps=1e-8, temperature=0.1):
         super().__init__()
-        self.initial_alpha = alpha
+        self.alpha = alpha
         self.eps = eps
         self.temperature = temperature
 
         self.sharpe_loss = SharpeLoss(eps)
         self.icc_loss = ICCLoss(eps, temperature)
 
-        initial_logit = torch.log(torch.tensor(self.initial_alpha) / (1.0 - self.initial_alpha))
-        
-        self.alpha_logit = nn.Parameter(initial_logit)
-    @property
-    def alpha(self):
-        return torch.sigmoid(self.alpha_logit)
-
     def forward(self, weights, next_r, predicted_mu, real_mu):
-        current_alpha = self.alpha
-        return current_alpha * self.sharpe_loss(weights, next_r) + (1 - current_alpha) * self.icc_loss(predicted_mu, real_mu)
-    
+        sharpeloss_value = self.sharpe_loss(weights, next_r)
+        iccloss_value = self.icc_loss(predicted_mu, real_mu)
+        combined_loss = self.alpha * sharpeloss_value + (1 - self.alpha) * iccloss_value
+        return combined_loss, sharpeloss_value, iccloss_value
+        
