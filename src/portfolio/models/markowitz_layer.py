@@ -1,7 +1,24 @@
 import torch
 from typing import Literal
 import torch.nn.functional as F
-#TODO Implement STE (Straight-Through Estimator) for preventing zeroing gradients
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from typing import Literal
+
+class STECapWeights(torch.autograd.Function):
+    """Straight-through estimator for the capping function to allow gradients to pass through."""
+    @staticmethod
+    def forward(ctx, w, w_max, L, iters, as_absolute):
+        return cap_weights(w, w_max, L, iters, as_absolute)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return grad_output, None, None, None, None
+
+def cap_weights_ste(w: torch.Tensor, w_max: torch.Tensor, L: float = 1.0, iters: int = 5, as_absolute: bool = False):
+    return STECapWeights.apply(w, w_max, L, iters, as_absolute)
+
 def cap_weights(w: torch.Tensor, w_max: torch.Tensor, L: float = 1.0, iters: int = 5, as_absolute: bool = False):
     """Iteratively cap per-asset weights and redistribute the excess.
 
@@ -56,53 +73,31 @@ def cap_weights(w: torch.Tensor, w_max: torch.Tensor, L: float = 1.0, iters: int
     return w_scaled
 
 def markowitz_layer(u, covarience, weights_option: Literal['long-only', 'long-short', 'neutral-only'], gamma=1.0, ridge=1e-2, t=1.0, w_max=0.15, L=1.0, eps=1e-8):
-    """Differentiable Markowitz portfolio optimisation layer.
-
-    Solves the regularised mean-variance problem and maps the solution to
-    portfolio weights according to the chosen construction strategy.
-
-    Args:
-        u:              Predicted expected returns  (batch, n_assets).
-        covarience:     Covariance matrix           (batch, n_assets, n_assets).
-        weights_option: Portfolio construction mode:
-                          - 'long-only'   : softmax weights, all >= 0, sum = 1.
-                          - 'long-short'  : signed weights, gross exposure = L.
-                          - 'neutral-only': signed weights, net exposure = 0.
-        gamma:  Risk-aversion coefficient  (higher -> lower risk).
-        ridge:  Ridge regularisation added to the covariance diagonal.
-        t:      Softmax temperature  (lower -> more concentrated bets).
-        w_max:  Per-asset weight cap as a fraction of L.
-        L:      Target gross leverage.
-        eps:    Numerical stability floor.
-
-    Returns:
-        Portfolio weight tensor  (batch, n_assets).
-    """
+    """Differentiable Markowitz portfolio optimisation layer with STE support."""
     w_max_scaled = torch.tensor(w_max * L, device=u.device, dtype=u.dtype)
 
-    # Regularised system: (gamma * Sigma + lambda * I) z = mu  =>  z ≈ Sigma^{-1} mu / gamma
+    # Regularised system: (gamma * Sigma + lambda * I) z = mu
     I = torch.eye(covarience.shape[1], device=u.device)
-    z = torch.linalg.solve(gamma * covarience + ridge * I, u)
+    A = gamma * covarience + ridge * covarience.diagonal().mean() * I
+
+    z = torch.linalg.solve(A, u)
 
     # Standardise scores to decouple temperature from scale.
     z_norm = z / (torch.std(z, dim=-1, keepdim=True) + eps)
 
     if weights_option == "long-only":
-        # Softmax ensures positivity and sums to 1; cap_weights enforces w_max.
+        # Используем СТЕ-версию капинга
         w = F.softmax(z_norm / t, dim=-1)
-        w_norm = cap_weights(w, w_max_scaled, L)
+        w_norm = cap_weights_ste(w, w_max_scaled, L, iters=5, as_absolute=False)
 
     elif weights_option == "long-short":
-        # Long leg minus short leg gives a bipolar score; cap absolute exposure.
         raw_w = F.softmax(z_norm / t, dim=-1) - F.softmax(-z_norm / t, dim=-1)
-        w_norm = cap_weights(raw_w, w_max_scaled, L, as_absolute=True)
+        w_norm = cap_weights_ste(raw_w, w_max_scaled, L, iters=5, as_absolute=True)
         w_norm = w_norm / torch.clamp(torch.sum(torch.abs(w_norm), dim=-1, keepdim=True), min=eps) * L
 
     elif weights_option == "neutral-only":
-        # Centre scores before capping to produce a zero-net-exposure portfolio.
         z_centered = z_norm - torch.mean(z_norm, dim=-1, keepdim=True)
-        w = cap_weights(z_centered, w_max_scaled, L, as_absolute=True)
-        # Re-centre after capping in case small asymmetries shifted the mean.
+        w = cap_weights_ste(z_centered, w_max_scaled, L, iters=5, as_absolute=True)
         w_norm = w - torch.mean(w, dim=-1, keepdim=True)
         w_norm = w_norm / torch.clamp(torch.sum(torch.abs(w_norm), dim=-1, keepdim=True), min=eps) * L
 
