@@ -26,15 +26,34 @@ eps: 1.0e-8
 features_path: "data/processed/features_tensor.pt"
 prices_path: "data/raw/prices.parquet"
 test_size: 0.2
-
 validation_size: 0.2
 
 epochs: 100
 batch_size: 32
-alpha: 0.2
+alpha: 0.7
+lr: 1.0e-3
 
 # Covariance estimation configuration from portfolio.covariance.estimators
-cov_estimator: "ledoit_wolf" # options: "sample", "ledoit_wolf", "ewma"
+cov_estimator: "sample" # options: "sample", "ledoit_wolf", "ewma"
 denoise: true                # apply Marchenko-Pastur spectral denoising
 lookback_days: 252           # rolling window in trading days
 half_life: 63                # used if cov_estimator is "ewma"
+
+# Learning rate scheduler configuration
+scheduler:
+  type: "ReduceLROnPlateau" # options: "ReduceLROnPlateau", "CosineAnnealingLR", "StepLR"
+  factor: 0.5
+  patience: 8
+  min_lr: 1.0e-5
+
+# Time-series walk-forward cross-validation
+cross_validation:
+  enabled: true
+  n_splits: 5
+  cv_epochs: 40
+
+# Backbones to train / cross-validate
+backbones:
+  - "DeepMarkowitz_MLP"
+  - "DeepMarkowitz_MHA"
+  - "DeepMarkowitz_MLA"
